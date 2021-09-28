@@ -19,11 +19,18 @@ class MrpProduction(models.Model):
 
     @api.model
     def create(self, values):
+        if not values.get('origin'):
+            values.update({'origin': self.origin})
+
         if not values.get('procurement_group_id'):
-            procurement_old = self.env['procurement.group'].search([('sale_id.name', '=', values['origin'])], limit=1, order='id ASC')
+            procurement_old = self.env['procurement.group'].search([
+                ('sale_id.name', '=', values['origin']),
+                ('partner_id', '!=', False)],
+                limit=1, order='id ASC')
             values['procurement_group_id'] = self.env["procurement.group"].create({
-                'name': values.get('name', 'PG'),
-                'sale_id': procurement_old and procurement_old.sale_id.id,
+                'name': values.get('name', values['origin']),
+                'sale_id': procurement_old.sale_id.id,
             }).id
+
         production = super(MrpProduction, self).create(values)
         return production
