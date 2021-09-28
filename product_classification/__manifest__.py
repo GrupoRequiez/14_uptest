@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
 {
     'name': "product_classification",
     'summary': """
@@ -9,7 +10,7 @@
     'author': "gflores",
     'website': "https://www.gruporequiez.com",
     'category': 'Inventory',
-    'version': '12.0.0.0.1',
+    'version': '0.0.1',
     'depends': ['product', 'stock'],
     'data': [
         # views

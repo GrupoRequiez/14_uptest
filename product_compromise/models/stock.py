@@ -76,10 +76,9 @@ class StockMove(models.Model):
 
     def _compute_dis_product(self):
         for move in self:
-            move.dis_product_in = move.product_incoming_qty - move.total_compromise_product # noqa
-            move.dis_product = move.product_qty_product - move.total_reserved_product # noqa
+            move.dis_product_in = move.product_incoming_qty - move.total_compromise_product  # noqa
+            move.dis_product = move.product_qty_product - move.total_reserved_product  # noqa
 
-    @api.multi
     def _compute_qty_product(self):
         stock_location_obj = self.env['stock.location']
         stock_location = stock_location_obj.search(
@@ -94,8 +93,9 @@ class StockMove(models.Model):
                 ['product_id', 'quantity'], ['product_id'])
             if quant_data:
                 move.product_qty_product = quant_data[0].get('quantity', 0.0)
+            else:
+                move.product_qty_product = 0.0
 
-    @api.multi
     def action_compromise(self):
         return {
             'type': 'ir.actions.act_window',
@@ -108,9 +108,8 @@ class StockMove(models.Model):
                         'location_id': self.location_id.id},
             'views': [(False, 'form')],
             'target': 'new',
-            }
+        }
 
-    @api.multi
     def action_liberate(self):
         lista = []
         for product_compromise in self.product_compromise_ids:
@@ -126,7 +125,7 @@ class StockMove(models.Model):
                         'lista': lista},
             'views': [(False, 'form')],
             'target': 'new',
-            }
+        }
 
     def _action_cancel(self):
         if super(StockMove, self)._action_cancel():
@@ -136,26 +135,37 @@ class StockMove(models.Model):
             product_compromises.unlink()
         return True
 
-    def _action_done(self):
+    def _action_done(self, cancel_backorder=False):
         if super(StockMove, self)._action_done():
             for moves in self:
-                product_compromises = self.env['product.compromise'].search(
-                    [('stock_move_in_id.id', '=', moves.id)])
-                for product_compromise in product_compromises:
-                    move = product_compromise.stock_move_out_id
-                    compromise_qty = sum(
-                        [compromise.qty_compromise for
-                         compromise in move.product_compromise_ids if
-                         compromise.state == 'done' and
-                         compromise.stock_move_in_id ==
-                         product_compromise.stock_move_in_id]) or 0.0
-                    if move.reserved_availability < move.product_uom_qty:
-                        move._update_reserved_quantity(
-                            compromise_qty, compromise_qty,
-                            move.location_id, strict=False)
+                product_compromises = self.env['product.compromise'].search([
+                    ('stock_move_in_id.id', '=', moves.id)
+                ])
+                if product_compromises:
+                    for product_compromise in product_compromises:
+                        move = product_compromise.stock_move_out_id
+                        compromise_qty = sum(
+                            [compromise.qty_compromise for
+                             compromise in move.product_compromise_ids if
+                             compromise.state == 'done' and
+                             compromise.stock_move_in_id ==
+                             product_compromise.stock_move_in_id])
+                        if move.reserved_availability < move.product_uom_qty:
+                            move._update_reserved_quantity(
+                                compromise_qty, compromise_qty,
+                                move.location_id, strict=False)
+
+                        move.forecast_availability = move.reserved_availability
+                        if move.product_uom_qty == move.reserved_availability:
+                            move.state = 'assigned'
+                            mrp_id = self.env['mrp.production'].search([
+                                ('name', '=', move.origin),
+                                ('state', 'not in', ('done', 'draft', 'cancel'))])
+                            mrp_id.reservation_state = 'assigned'
+                        else:
+                            move.state = 'partially_available'
         return True
 
-    @api.multi
     def action_reserve(self):
         return {
             'type': 'ir.actions.act_window',
@@ -167,9 +177,8 @@ class StockMove(models.Model):
                         'qty': self.product_uom_qty},
             'views': [(False, 'form')],
             'target': 'new',
-            }
+        }
 
-    @api.multi
     def action_assign_qty(self, need, available_quantity, qty_compromise):
         moves_to_assign = self.env['stock.move']
         moves = self.filtered(

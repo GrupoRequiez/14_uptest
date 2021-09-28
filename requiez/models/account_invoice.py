@@ -7,8 +7,9 @@ from odoo import fields, models
 _logger = logging.getLogger(__name__)
 
 
-class AccountInvoice(models.Model):
-    _inherit = 'account.invoice'
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+    _name = 'account.move'
 
     date_payment = fields.Datetime('Payment Date',)
     prioritized = fields.Boolean('Prioritized', readonly=True)
