@@ -6,10 +6,9 @@
 # Copyright 2018 Tecnativa - David Vidal
 # Copyright 2019 Giovanni - GSLabIt
 # License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
-
 {
     'name': 'Product Brand Manager',
-    'version': '12.0.2.0.0',
+    'version': '0.0.1',
     'development_status': "Mature",
     'category': 'Product',
     'summary': "Product Brand Manager",
@@ -20,7 +19,7 @@
     'license': 'AGPL-3',
     'depends': [
         'sale',
-        ],
+    ],
     'data': [
         'security/ir.model.access.csv',
         'views/product_brand_view.xml',
