@@ -19,14 +19,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ###############################################################################
-
 {
     'name': "Product Supply",
     'summary': """
     """,
     'description': """
     """,
-    'author': "Humanytek",
+    'author': "gflores",
     'website': "http://www.humanytek.com",
     'category': 'Manufacturing',
     'version': '1.0.0',
@@ -37,6 +36,9 @@
         'product_brand',
     ],
     'data': [
+        # security
+        "security/ir.model.access.csv",
+        # views
         'report/product_supply_report.xml',
         'report/supply_report_templates.xml',
         'view/stock_view.xml',
